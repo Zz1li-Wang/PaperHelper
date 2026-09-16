@@ -1,0 +1,19 @@
+{
+  "$schema": "https://gofastmcp.com/public/schemas/fastmcp.json/v1.json",
+  "source": {
+    "type": "filesystem",
+    "path": "src/paper_helper/apps/mcp_server/server.py",
+    "entrypoint": "mcp"
+  },
+  "environment": {
+    "type": "uv",
+    "project": "."
+  },
+  "deployment": {
+    "transport": "http",
+    "host": "127.0.0.1",
+    "port": 8001,
+    "path": "/mcp",
+    "log_level": "INFO"
+  }
+}

@@ -1,0 +1,17 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  apps/agent-worker: {}
+
+  packages/harness-core: {}
+
+  packages/harness-mcp: {}
+
+  packages/paper-helper-agent: {}

@@ -2,30 +2,45 @@
 
 面向持续科研活动的 AI Research Workspace。项目围绕研究材料、可追溯的研究状态、对话和研究成果组织功能。
 
-当前阶段：项目骨架与模块边界整理。仓库内容包括目录结构、产品需求和架构说明，尚未添加应用代码。
+当前阶段：建立双运行时 Monorepo 骨架和 FastMCP Gateway。Python Backend 使用 uv，TypeScript Agent 使用 pnpm workspace。
 
 ## 项目说明
 
-- [产品需求说明](<Paper Helper需求说明.pdf>)
-- [技术架构与开发设计 v0.2](Paper_Helper_技术架构与开发设计_v0.2.docx)
-- [目录结构与仓库划分草案](docs/architecture/project-structure.md)
-
-原始说明文件暂时保留在项目根目录。
+- [产品需求说明](<Paper Helper需求说明.md>)
+- [技术架构与开发设计](Paper_Helper_技术架构与开发设计.md)
+- [技术选型与基础设施基线](Paper_Helper_技术选型与基础设施基线.md)
+- [目录结构与仓库边界](docs/architecture/project-structure.md)
 
 ## 目录概览
 
 ```text
 paper_helper/
-├── apps/          # 前端、API、科研 Agent、MCP 与 Worker
-├── packages/      # 通用运行库、跨进程契约与业务模块
+├── backend/       # Python Backend、FastAPI、FastMCP 与 Ingestion
+├── agent/         # TypeScript Agent Worker、Agent 与 Harness
+├── contracts/     # 跨语言 OpenAPI、JSON Schema 与事件契约
 ├── docs/          # 需求、架构与决策说明
-├── migrations/    # 数据库迁移预留
-├── tests/         # 跨模块集成、契约、端到端与架构测试
+├── tests/         # 跨运行时集成、契约、端到端与架构测试
 └── deploy/        # 部署配置预留
 ```
 
-当前目录采用 Monorepo（单仓多包）结构；各应用可以独立运行与部署。
+FastAPI 与 FastMCP 是同一 Python Backend 的并列 Gateway Adapter，共享 Application/Domain 模块，但可以作为独立进程运行。FastMCP 不通过 FastAPI 转发业务调用。
 
-每个应用和包都有自己的 `tests/`，例如 `apps/paper_helper_agent/tests/` 和 `apps/mcp_server/tests/`。单个模块的测试放在模块目录中；根目录的 `tests/` 用于验证跨模块协作和全仓库边界。
+## Backend 快速开始
 
-预留目录使用 `.gitkeep` 占位，使 Git 能保存目录结构；后续添加实际文件后可移除对应占位文件。
+```bash
+cd backend
+uv sync
+uv run pytest
+uv run fastmcp run fastmcp.json --skip-env
+```
+
+FastMCP 默认通过 Streamable HTTP 暴露在 `http://127.0.0.1:8001/mcp`。当前服务骨架尚未暴露业务工具。
+
+## Agent 工作区
+
+```bash
+cd agent
+corepack pnpm install
+```
+
+Agent 工作区当前只建立包边界，尚未添加运行时代码。
