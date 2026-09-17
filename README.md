@@ -28,9 +28,9 @@ FastAPI 与 FastMCP 是同一 Python Backend 的并列 Gateway Adapter，共享 
 ## Backend 快速开始
 
 ```bash
+make backend-check
+
 cd backend
-uv sync
-uv run pytest
 uv run fastmcp run fastmcp.json --skip-env
 ```
 
@@ -39,8 +39,24 @@ FastMCP 默认通过 Streamable HTTP 暴露在 `http://127.0.0.1:8001/mcp`。当
 ## Agent 工作区
 
 ```bash
-cd agent
-corepack pnpm install
+make agent-check
 ```
 
 Agent 工作区当前只建立包边界，尚未添加运行时代码。
+
+## 数据库迁移与 CI
+
+数据库命令统一从仓库根目录执行：
+
+```bash
+make migration-heads
+make migration-revision m=add_workspace
+make migration-upgrade
+make migration-check
+```
+
+迁移命令要求显式配置 `PAPER_HELPER_DATABASE_URL`。完整规则见
+[数据库迁移规范](docs/architecture/database-migrations.md)。GitHub Actions 对每个
+`main` Pull Request 执行 Backend、Agent 和数据库迁移三项检查。工作流首次在 GitHub
+成功运行后，按 [`main` 分支保护说明](docs/development/main-branch-protection.md) 创建
+团队仓库 ruleset。

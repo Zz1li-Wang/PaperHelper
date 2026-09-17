@@ -36,7 +36,8 @@ backend/
 │   ├── research/
 │   ├── artifacts/
 │   ├── conversations/
-│   └── agent_runs/
+│   ├── agent_runs/
+│   └── infrastructure/             # 共享 ORM Base 与显式模型注册入口
 ├── migrations/
 ├── tests/
 ├── fastmcp.json
@@ -45,6 +46,10 @@ backend/
 ```
 
 Backend 是一个 Python distribution 和一个 uv 环境。业务模块不是独立发布的 Python 包，避免在 MVP 阶段引入内部包发布和多锁文件成本。
+
+所有模块的 ORM 模型共享 `paper_helper.infrastructure.database.OrmBase`，并在显式注册入口中
+登记，确保 Alembic autogenerate 与 drift check 能加载完整 metadata。数据库 migration
+使用单一 revision chain；具体规则见[数据库迁移规范](database-migrations.md)。
 
 每个业务模块按需要建立以下分层：
 
