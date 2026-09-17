@@ -55,10 +55,11 @@ jobs:
       - name: Set up pnpm and Node.js
         uses: pnpm/setup@v2
         with:
-          working-directory: agent
+          package-json-file: agent/package.json
           version: "11.17.0"
           runtime: node@24
           cache: true
+          cache-dependency-path: agent/pnpm-lock.yaml
           install: false
 
       - name: Verify agent workspace
