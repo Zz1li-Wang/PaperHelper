@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     )
 
     environment: Literal["local", "test", "staging", "production"] = "local"
+    database_url: str | None = None
     mcp_host: str = "127.0.0.1"
     mcp_port: int = 8001
     mcp_log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"

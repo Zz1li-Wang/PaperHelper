@@ -10,6 +10,12 @@ uv run pytest
 uv run ruff check .
 ```
 
+也可以从仓库根目录运行统一检查：
+
+```bash
+make backend-check
+```
+
 启动 FastMCP 服务：
 
 ```bash
@@ -23,3 +29,17 @@ uv run fastmcp run fastmcp.json --skip-env
 ```bash
 uv run python -m paper_helper.apps.mcp_server
 ```
+
+## 数据库迁移
+
+复制 `.env.example` 并配置 `PAPER_HELPER_DATABASE_URL` 后，从仓库根目录使用：
+
+```bash
+make migration-heads
+make migration-revision m=add_workspace
+make migration-upgrade
+make migration-check
+```
+
+当前迁移链保持为空，直到第一个 ORM 模型落地。Alembic 不会自动创建数据库，应用进程
+启动时也不会自动执行 migration。

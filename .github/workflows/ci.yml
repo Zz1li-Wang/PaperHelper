@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend / quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: backend/.python-version
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.12.15"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Run backend checks
+        run: make backend-check
+
+  agent:
+    name: Agent / quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v2
+        with:
+          package-json-file: agent/package.json
+          version: "11.17.0"
+          runtime: node@24
+          cache: true
+          cache-dependency-path: agent/pnpm-lock.yaml
+          install: false
+
+      - name: Verify agent workspace
+        run: make agent-check PNPM=pnpm
+
+  migrations:
+    name: Database / migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PAPER_HELPER_DATABASE_URL: postgresql+asyncpg://paper_helper:paper_helper@127.0.0.1:5432/paper_helper_ci
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: paper_helper
+          POSTGRES_PASSWORD: paper_helper
+          POSTGRES_DB: paper_helper_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U paper_helper -d paper_helper_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: backend/.python-version
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.12.15"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Validate migrations
+        run: make migration-check
