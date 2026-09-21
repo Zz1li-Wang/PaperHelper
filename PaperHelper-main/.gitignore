@@ -1,0 +1,29 @@
+# 本地 Agent / Codex 工作区元数据
+/.agents/
+/.codex/
+
+# Windows 下载来源标记与系统文件
+*:Zone.Identifier
+.DS_Store
+Thumbs.db
+
+# 本地环境配置
+.env
+.env.*
+!.env.example
+
+# Python 虚拟环境、缓存与构建输出
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# 前端依赖与构建输出
+node_modules/
+dist/
+build/

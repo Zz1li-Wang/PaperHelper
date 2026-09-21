@@ -1,0 +1,6 @@
+{
+  "name": "paper-helper-agent-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.17.0"
+}
