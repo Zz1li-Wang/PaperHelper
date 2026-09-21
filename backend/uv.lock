@@ -2,6 +2,15 @@ version = 1
 revision = 3
 requires-python = ">=3.12, <3.14"
 
+[manifest]
+members = [
+    "paper-helper-backend-workspace",
+    "paper-helper-interaction-service",
+    "paper-helper-knowledge-service",
+    "paper-helper-mcp-gateway",
+    "paper-helper-research-core",
+]
+
 [[package]]
 name = "aiofile"
 version = "3.12.3"
@@ -728,38 +737,92 @@ wheels = [
 ]
 
 [[package]]
-name = "paper-helper-backend"
+name = "paper-helper-backend-workspace"
 version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "alembic" },
-    { name = "asyncpg" },
-    { name = "fastmcp" },
-    { name = "pydantic-settings" },
-    { name = "sqlalchemy", extra = ["asyncio"] },
-]
+source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "alembic" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "alembic", specifier = ">=1.16,<2" },
-    { name = "asyncpg", specifier = ">=0.30,<1" },
-    { name = "fastmcp", specifier = "==4.0.4" },
-    { name = "pydantic-settings", specifier = ">=2.10,<3" },
-    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0,<3" },
-]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "alembic", specifier = ">=1.16,<2" },
     { name = "pytest", specifier = ">=8.4,<10" },
     { name = "pytest-asyncio", specifier = ">=1.2,<2" },
     { name = "ruff", specifier = ">=0.12,<1" },
+]
+
+[[package]]
+name = "paper-helper-interaction-service"
+version = "0.1.0"
+source = { editable = "services/interaction_service" }
+dependencies = [
+    { name = "alembic" },
+    { name = "asyncpg" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alembic", specifier = ">=1.16,<2" },
+    { name = "asyncpg", specifier = ">=0.30,<1" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0,<3" },
+]
+
+[[package]]
+name = "paper-helper-knowledge-service"
+version = "0.1.0"
+source = { editable = "services/knowledge_service" }
+dependencies = [
+    { name = "alembic" },
+    { name = "asyncpg" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alembic", specifier = ">=1.16,<2" },
+    { name = "asyncpg", specifier = ">=0.30,<1" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0,<3" },
+]
+
+[[package]]
+name = "paper-helper-mcp-gateway"
+version = "0.1.0"
+source = { editable = "gateways/mcp_gateway" }
+dependencies = [
+    { name = "fastmcp" },
+    { name = "pydantic-settings" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", specifier = "==4.0.4" },
+    { name = "pydantic-settings", specifier = ">=2.10,<3" },
+]
+
+[[package]]
+name = "paper-helper-research-core"
+version = "0.1.0"
+source = { editable = "services/research_core" }
+dependencies = [
+    { name = "alembic" },
+    { name = "asyncpg" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alembic", specifier = ">=1.16,<2" },
+    { name = "asyncpg", specifier = ">=0.30,<1" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0,<3" },
 ]
 
 [[package]]

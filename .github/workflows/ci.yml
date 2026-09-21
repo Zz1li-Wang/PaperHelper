@@ -70,7 +70,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      PAPER_HELPER_DATABASE_URL: postgresql+asyncpg://paper_helper:paper_helper@127.0.0.1:5432/paper_helper_ci
+      PAPER_HELPER_RESEARCH_CORE_DATABASE_URL: postgresql+asyncpg://paper_helper:paper_helper@127.0.0.1:5432/paper_helper_research_ci
+      PAPER_HELPER_KNOWLEDGE_DATABASE_URL: postgresql+asyncpg://paper_helper:paper_helper@127.0.0.1:5432/paper_helper_knowledge_ci
+      PAPER_HELPER_INTERACTION_DATABASE_URL: postgresql+asyncpg://paper_helper:paper_helper@127.0.0.1:5432/paper_helper_interaction_ci
 
     services:
       postgres:
@@ -78,11 +80,11 @@ jobs:
         env:
           POSTGRES_USER: paper_helper
           POSTGRES_PASSWORD: paper_helper
-          POSTGRES_DB: paper_helper_ci
+          POSTGRES_DB: postgres
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U paper_helper -d paper_helper_ci"
+          --health-cmd "pg_isready -U paper_helper -d postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -104,6 +106,14 @@ jobs:
           version: "0.12.15"
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
+
+      - name: Create service databases
+        env:
+          PGPASSWORD: paper_helper
+        run: |
+          createdb -h 127.0.0.1 -U paper_helper paper_helper_research_ci
+          createdb -h 127.0.0.1 -U paper_helper paper_helper_knowledge_ci
+          createdb -h 127.0.0.1 -U paper_helper paper_helper_interaction_ci
 
       - name: Validate migrations
         run: make migration-check
