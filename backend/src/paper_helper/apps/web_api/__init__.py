@@ -1,1 +1,0 @@
-"""FastAPI gateway application boundary."""

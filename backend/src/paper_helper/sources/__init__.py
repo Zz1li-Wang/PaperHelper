@@ -1,1 +1,0 @@
-"""Sources business module."""

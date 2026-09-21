@@ -1,1 +1,0 @@
-"""Ingestion worker application boundary."""

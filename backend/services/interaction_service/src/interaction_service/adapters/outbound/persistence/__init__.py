@@ -1,0 +1,1 @@
+"""Interaction service persistence adapters."""
