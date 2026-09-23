@@ -32,6 +32,8 @@ paper_helper/
 
 ```text
 backend/
+├── packages/
+│   └── platform_messaging/         # 无业务语义的 Python RabbitMQ 传输能力
 ├── services/
 │   ├── research_core/              # Workspace、Research、Artifacts
 │   │   ├── src/research_core/
@@ -135,3 +137,8 @@ Agent Worker 只能通过 MCP、受限 Runtime API 和版本化消息与 Backend
 不要建立包含 Entity、DTO、Repository 或数据库模型的 `common` 包。只有日志、Tracing、
 认证中间件和 Event Envelope 等纯技术能力在出现两个以上真实使用方后，才允许进入
 版本化 platform library。共享业务含义必须进入契约，不能进入共享运行时代码。
+
+RabbitMQ 的 Python 连接、publisher confirm、manual ack 与通用重试机制位于
+`backend/packages/platform_messaging/`。具体消息 Payload、Consumer Handler、Outbox/Inbox
+ORM 与幂等规则仍属于各业务服务；TypeScript Agent 只共享 `contracts/events/` 契约，不依赖
+Python package。

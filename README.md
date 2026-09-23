@@ -21,7 +21,7 @@ paper_helper/
 ├── contracts/     # 跨语言 OpenAPI、JSON Schema 与事件契约
 ├── docs/          # 需求、架构与决策说明
 ├── tests/         # 跨运行时集成、契约、端到端与架构测试
-└── deploy/        # 部署配置预留
+└── deploy/        # Broker、反向代理等部署与本地基础设施配置
 ```
 
 Backend 当前划分为 `research_core`、`knowledge_service` 和 `interaction_service` 三个数据
@@ -39,6 +39,18 @@ uv run --package paper-helper-mcp-gateway python -m paper_helper_mcp_gateway
 ```
 
 FastMCP 默认通过 Streamable HTTP 暴露在 `http://127.0.0.1:8001/mcp`。当前服务骨架尚未暴露业务工具。
+
+## RabbitMQ 本地环境
+
+RabbitMQ 的 Broker 配置位于 `deploy/rabbitmq/`，跨服务消息 Schema 位于
+`contracts/events/`，Python 通用传输实现位于 `backend/packages/platform_messaging/`。
+
+```bash
+make rabbitmq-up
+```
+
+默认 AMQP 地址为 `amqp://paper_helper:paper_helper@127.0.0.1:5672/paper_helper`，管理界面为
+`http://127.0.0.1:15672`。本地凭据仅用于开发环境。
 
 ## Agent 工作区
 

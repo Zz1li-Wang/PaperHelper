@@ -1,0 +1,76 @@
+{
+  "rabbit_version": "4.3.6",
+  "users": [
+    {
+      "name": "paper_helper",
+      "password_hash": "tWKY51g9FPLSnKeXUKkkrZMhXA829cPinkbI0WKzzUQxQhu2",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"],
+      "limits": {}
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "paper_helper",
+      "description": "Paper Helper local development",
+      "tags": []
+    }
+  ],
+  "permissions": [
+    {
+      "user": "paper_helper",
+      "vhost": "paper_helper",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "paper_helper.commands",
+      "vhost": "paper_helper",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "paper_helper.events",
+      "vhost": "paper_helper",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "paper_helper.dead_letters",
+      "vhost": "paper_helper",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "policies": [
+    {
+      "vhost": "paper_helper",
+      "name": "paper-helper-quorum-safety",
+      "pattern": "^paper_helper\\.",
+      "apply-to": "quorum_queues",
+      "priority": 0,
+      "definition": {
+        "dead-letter-strategy": "at-least-once",
+        "delivery-limit": 5,
+        "max-length-bytes": 268435456,
+        "overflow": "reject-publish"
+      }
+    }
+  ],
+  "queues": [],
+  "bindings": [],
+  "parameters": [],
+  "global_parameters": []
+}

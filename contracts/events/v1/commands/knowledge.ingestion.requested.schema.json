@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paper-helper.local/contracts/events/v1/commands/knowledge.ingestion.requested.schema.json",
+  "title": "Knowledge ingestion requested command v1",
+  "allOf": [
+    {
+      "$ref": "https://paper-helper.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "properties": {
+        "message_type": {"const": "knowledge.ingestion.requested"},
+        "message_kind": {"const": "command"},
+        "schema_version": {"const": 1},
+        "workspace_id": {"type": "string", "format": "uuid"},
+        "aggregate_type": {"const": "source"},
+        "aggregate_id": {"type": "string", "format": "uuid"},
+        "aggregate_version": {"type": "integer", "minimum": 0},
+        "payload": {
+          "type": "object",
+          "required": ["source_id", "object_key", "object_hash", "pipeline_version"],
+          "properties": {
+            "source_id": {"type": "string", "format": "uuid"},
+            "object_key": {"type": "string", "minLength": 1},
+            "object_hash": {"type": "string", "minLength": 1},
+            "pipeline_version": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}
