@@ -6,14 +6,18 @@ from pathlib import Path
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 SERVICES_ROOT = BACKEND_ROOT / "services"
 GATEWAYS_ROOT = BACKEND_ROOT / "gateways"
+PLATFORM_PACKAGES_ROOT = BACKEND_ROOT / "packages"
 SERVICE_PACKAGES = {"research_core", "knowledge_service", "interaction_service"}
 DOMAIN_FORBIDDEN_IMPORTS = {
+    "aio_pika",
     "alembic",
+    "aiormq",
     "asyncpg",
     "fastapi",
     "fastmcp",
     "httpx",
     "pydantic",
+    "paper_helper_messaging",
     "redis",
     "sqlalchemy",
 }
@@ -60,6 +64,16 @@ def test_gateways_do_not_import_service_implementations() -> None:
         if illegal:
             violations.append(f"{path.relative_to(BACKEND_ROOT)} -> {', '.join(illegal)}")
     message = "Gateways must use service contracts or clients:\n" + "\n".join(violations)
+    assert not violations, message
+
+
+def test_platform_packages_do_not_import_service_implementations() -> None:
+    violations: list[str] = []
+    for path in PLATFORM_PACKAGES_ROOT.rglob("*.py"):
+        illegal = sorted(_imports(path) & SERVICE_PACKAGES)
+        if illegal:
+            violations.append(f"{path.relative_to(BACKEND_ROOT)} -> {', '.join(illegal)}")
+    message = "Platform packages must remain business-agnostic:\n" + "\n".join(violations)
     assert not violations, message
 
 

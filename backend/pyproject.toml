@@ -8,6 +8,7 @@ dependencies = []
 [dependency-groups]
 dev = [
     "alembic>=1.16,<2",
+    "jsonschema>=4.26,<5",
     "pytest>=8.4,<10",
     "pytest-asyncio>=1.2,<2",
     "ruff>=0.12,<1",
@@ -19,11 +20,12 @@ package = false
 [tool.uv.workspace]
 members = [
     "gateways/*",
+    "packages/*",
     "services/*",
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "gateways", "services"]
+testpaths = ["tests", "gateways", "packages", "services", "../tests/contracts"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 

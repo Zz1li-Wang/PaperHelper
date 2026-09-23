@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paper-helper.local/contracts/events/v1/envelope.schema.json",
+  "title": "Paper Helper message envelope v1",
+  "type": "object",
+  "required": [
+    "message_id",
+    "message_type",
+    "message_kind",
+    "schema_version",
+    "occurred_at",
+    "producer",
+    "correlation_id",
+    "causation_id",
+    "workspace_id",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "actor",
+    "payload"
+  ],
+  "properties": {
+    "message_id": {"type": "string", "format": "uuid"},
+    "message_type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)+$"
+    },
+    "message_kind": {"enum": ["command", "event"]},
+    "schema_version": {"type": "integer", "minimum": 1},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "producer": {"type": "string", "minLength": 1},
+    "correlation_id": {"type": "string", "format": "uuid"},
+    "causation_id": {
+      "anyOf": [{"type": "string", "format": "uuid"}, {"type": "null"}]
+    },
+    "workspace_id": {
+      "anyOf": [{"type": "string", "format": "uuid"}, {"type": "null"}]
+    },
+    "aggregate_type": {
+      "anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]
+    },
+    "aggregate_id": {
+      "anyOf": [{"type": "string", "format": "uuid"}, {"type": "null"}]
+    },
+    "aggregate_version": {
+      "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+    },
+    "actor": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": {"enum": ["user", "service", "system"]},
+        "id": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "payload": {"type": "object"}
+  },
+  "additionalProperties": false
+}
