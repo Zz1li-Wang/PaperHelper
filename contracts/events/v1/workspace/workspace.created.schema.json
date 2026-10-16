@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paper-helper.local/contracts/events/v1/workspace/workspace.created.schema.json",
+  "title": "Workspace created event v1",
+  "allOf": [
+    {
+      "$ref": "https://paper-helper.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "properties": {
+        "message_type": {"const": "workspace.created"},
+        "message_kind": {"const": "event"},
+        "schema_version": {"const": 1},
+        "workspace_id": {"type": "string", "format": "uuid"},
+        "aggregate_type": {"const": "workspace"},
+        "aggregate_id": {"type": "string", "format": "uuid"},
+        "aggregate_version": {"type": "integer", "minimum": 1},
+        "payload": {
+          "type": "object",
+          "required": ["title", "description", "visibility", "owner_id"],
+          "properties": {
+            "title": {"type": "string"},
+            "description": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+            "visibility": {"enum": ["private", "shared", "public"]},
+            "owner_id": {"type": "string"}
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

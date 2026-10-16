@@ -1,0 +1,419 @@
+openapi: 3.1.0
+info:
+  title: Paper Helper Workspace API
+  version: "1.0.0"
+  description: |
+    Workspace 模块的工作空间生命周期接口（P1 第一切片）。
+
+    只描述**已实现**的路由——契约随切片增长，不预先写下尚未落地的接口。
+    列表（ListWorkspaces）与快照（GetWorkspaceSnapshot）等应用层用例落地后再加。
+
+    两条通则（设计 §7.3）：
+
+    - `expectedVersion` **只走请求体**，不使用 `If-Match`（其失败码 412 与本文的 409 冲突）。
+    - 全部路由要求认证凭据（`Authorization`）；认证失败在入站层终结为 401，不进入业务层。
+servers:
+  - url: http://127.0.0.1:8000
+    description: 本地开发
+
+paths:
+  /api/v1/workspaces:
+    get:
+      summary: ListWorkspaces
+      description: |
+        只返回**调用者自己的**工作空间——过滤条件本身就是权限边界，别人的不会出现在结果里。
+
+        状态口径：不给 `status` 时默认**只返回 active**；`status=` 精确匹配某个状态（查归档
+        历史就传它）；`includeDeleted=true` 在不给 `status` 时放开为**全部状态**。
+
+        排序键固定 `(createdAt DESC, id ASC)`——`id` 是稳定分页必需的 tiebreaker。
+      operationId: listWorkspaces
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: 精确匹配的工作空间状态；给了它 `includeDeleted` 就不再参与
+          schema: {$ref: "#/components/schemas/WorkspaceStatus"}
+        - name: includeDeleted
+          in: query
+          required: false
+          description: 未给 `status` 时，把默认的 active 放开为全部状态
+          schema: {type: boolean, default: false}
+        - name: page
+          in: query
+          required: false
+          schema: {type: integer, minimum: 1, default: 1}
+        - name: pageSize
+          in: query
+          required: false
+          description: 默认 50、上限 200；**超过上限夹到 200 而不报错**，实际值在响应里回带
+          schema: {type: integer, minimum: 1, maximum: 200, default: 50}
+      responses:
+        "200":
+          description: 一页工作空间
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspacePage"}
+        "400": {$ref: "#/components/responses/ValidationError"}
+        "401": {$ref: "#/components/responses/Unauthenticated"}
+    post:
+      summary: CreateWorkspace
+      operationId: createWorkspace
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateWorkspaceRequest"}
+      responses:
+        "201":
+          description: 工作空间已创建
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceSnapshot"}
+        "400": {$ref: "#/components/responses/ValidationError"}
+        "401": {$ref: "#/components/responses/Unauthenticated"}
+
+  /api/v1/workspaces/{workspace_id}:
+    parameters:
+      - $ref: "#/components/parameters/WorkspaceId"
+    get:
+      summary: GetWorkspace
+      operationId: getWorkspace
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: 工作空间快照
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceSnapshot"}
+        "401": {$ref: "#/components/responses/Unauthenticated"}
+        "403": {$ref: "#/components/responses/PermissionDenied"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/StateConflict"}
+    patch:
+      summary: UpdateWorkspace
+      operationId: updateWorkspace
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UpdateWorkspaceRequest"}
+      responses:
+        "200":
+          description: 更新后的快照；无字段变化时版本不变
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceSnapshot"}
+        "400": {$ref: "#/components/responses/ValidationError"}
+        "401": {$ref: "#/components/responses/Unauthenticated"}
+        "403": {$ref: "#/components/responses/PermissionDenied"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/StateConflict"}
+    delete:
+      summary: DeleteWorkspace
+      description: 单行写、不级联（§3.2）。`expectedVersion` 走请求体。
+      operationId: deleteWorkspace
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/DeleteWorkspaceRequest"}
+      responses:
+        "200":
+          description: 已删除
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceDeleted"}
+        "400": {$ref: "#/components/responses/ValidationError"}
+        "401": {$ref: "#/components/responses/Unauthenticated"}
+        "403": {$ref: "#/components/responses/PermissionDenied"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/StateConflict"}
+
+  /api/v1/workspaces/{workspace_id}/snapshot:
+    parameters:
+      - $ref: "#/components/parameters/WorkspaceId"
+    get:
+      summary: GetWorkspaceSnapshot
+      description: |
+        当前与 `GetWorkspace` **同体**：`refs` / `sessions` / `producedResources` 三个列表随各自
+        聚合落地（§3.6 里它们本就是可选字段，所以在实现之前是**键缺席**，而不是空数组——
+        空数组会谎称"这个工作空间没有引用"）。`compositionVersion` 此刻恒等于 `version`。
+      operationId: getWorkspaceSnapshot
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: 工作空间快照
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceSnapshot"}
+        "401": {$ref: "#/components/responses/Unauthenticated"}
+        "403": {$ref: "#/components/responses/PermissionDenied"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/StateConflict"}
+
+  /api/v1/workspaces/{workspace_id}/archive:
+    parameters:
+      - $ref: "#/components/parameters/WorkspaceId"
+    post:
+      summary: ArchiveWorkspace
+      description: 只读封存。对已归档的工作空间返回 409（不是幂等无操作，§3.8）。
+      operationId: archiveWorkspace
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ArchiveWorkspaceRequest"}
+      responses:
+        "200":
+          description: 已归档的快照
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceSnapshot"}
+        "400": {$ref: "#/components/responses/ValidationError"}
+        "401": {$ref: "#/components/responses/Unauthenticated"}
+        "403": {$ref: "#/components/responses/PermissionDenied"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/StateConflict"}
+
+  /api/v1/workspaces/{workspace_id}/restore:
+    parameters:
+      - $ref: "#/components/parameters/WorkspaceId"
+    post:
+      summary: RestoreWorkspace
+      description: 取消封存；对已 active 的工作空间是幂等无操作（不递增版本、不发事件）。
+      operationId: restoreWorkspace
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RestoreWorkspaceRequest"}
+      responses:
+        "200":
+          description: 已恢复的快照
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceSnapshot"}
+        "400": {$ref: "#/components/responses/ValidationError"}
+        "401": {$ref: "#/components/responses/Unauthenticated"}
+        "403": {$ref: "#/components/responses/PermissionDenied"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/StateConflict"}
+
+  /api/v1/workspaces/{workspace_id}/transfer-ownership:
+    parameters:
+      - $ref: "#/components/parameters/WorkspaceId"
+    post:
+      summary: TransferOwnership
+      description: 归档态也允许（§8）；转给当前 owner 是无操作。
+      operationId: transferOwnership
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TransferOwnershipRequest"}
+      responses:
+        "200":
+          description: 转移后的快照
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceSnapshot"}
+        "400": {$ref: "#/components/responses/ValidationError"}
+        "401": {$ref: "#/components/responses/Unauthenticated"}
+        "403": {$ref: "#/components/responses/PermissionDenied"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/StateConflict"}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        由外部用户系统签发的凭据，经 `ActorResolver` 解析为 `actorId`。
+        开发期可用 `ALLOW_DEV_IDENTITY=1` 装载桩实现（`Authorization: Bearer <actorId>`），
+        该桩不得用于生产。
+
+  parameters:
+    WorkspaceId:
+      name: workspace_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+
+  responses:
+    ValidationError:
+      description: 400 VALIDATION_ERROR（含缺 expectedVersion）
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/ErrorResponse"}
+    Unauthenticated:
+      description: 401 UNAUTHENTICATED / TOKEN_EXPIRED
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/ErrorResponse"}
+    PermissionDenied:
+      description: 403 PERMISSION_DENIED
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/ErrorResponse"}
+    NotFound:
+      description: 404 WORKSPACE_NOT_FOUND
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/ErrorResponse"}
+    StateConflict:
+      description: |
+        409：VERSION_CONFLICT（响应体带 currentVersion）、WORKSPACE_ARCHIVED、WORKSPACE_DELETED
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/ErrorResponse"}
+
+  schemas:
+    CreateWorkspaceRequest:
+      type: object
+      required: [title]
+      properties:
+        title: {type: string}
+        description: {type: [string, "null"]}
+        visibility: {$ref: "#/components/schemas/Visibility"}
+      additionalProperties: false
+
+    UpdateWorkspaceRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, minimum: 1}
+        title: {type: [string, "null"]}
+        description: {type: [string, "null"]}
+        visibility: {$ref: "#/components/schemas/Visibility"}
+      additionalProperties: false
+
+    ArchiveWorkspaceRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, minimum: 1}
+        reason: {type: [string, "null"]}
+      additionalProperties: false
+
+    RestoreWorkspaceRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, minimum: 1}
+      additionalProperties: false
+
+    TransferOwnershipRequest:
+      type: object
+      required: [expectedVersion, newOwnerId]
+      properties:
+        expectedVersion: {type: integer, minimum: 1}
+        newOwnerId: {type: string}
+      additionalProperties: false
+
+    DeleteWorkspaceRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, minimum: 1}
+      additionalProperties: false
+
+    Visibility:
+      type: string
+      enum: [private, shared, public]
+
+    WorkspaceStatus:
+      type: string
+      enum: [active, archived, deleted]
+
+    WorkspaceView:
+      type: object
+      required:
+        - id
+        - type
+        - title
+        - version
+        - contextVersion
+        - ownerId
+        - visibility
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id: {type: string, format: uuid}
+        type: {type: string, enum: [workspace, replica]}
+        title: {type: string}
+        description: {type: [string, "null"]}
+        version: {type: integer, minimum: 1}
+        contextVersion: {type: integer, minimum: 1}
+        ownerId: {type: string}
+        visibility: {$ref: "#/components/schemas/Visibility"}
+        status: {$ref: "#/components/schemas/WorkspaceStatus"}
+        archivedAt:
+          type: [string, "null"]
+          format: date-time
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+
+    ActorView:
+      type: object
+      required: [actorId, type, relation, permissions]
+      properties:
+        actorId: {type: string}
+        type: {type: string, enum: [user, service, system]}
+        relation: {type: string, enum: [owner, replica_visitor, public_visitor]}
+        permissions:
+          type: array
+          items: {type: string}
+
+    WorkspaceSnapshot:
+      type: object
+      required: [workspace, actor, availableActions, version, contextVersion, compositionVersion]
+      properties:
+        workspace: {$ref: "#/components/schemas/WorkspaceView"}
+        actor: {$ref: "#/components/schemas/ActorView"}
+        availableActions:
+          type: array
+          items: {type: string}
+        version: {type: integer, minimum: 1}
+        contextVersion: {type: integer, minimum: 1}
+        compositionVersion: {type: integer, minimum: 1}
+
+    WorkspacePage:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/WorkspaceView"}
+        total:
+          type: integer
+          minimum: 0
+          description: 当前过滤条件下的总数，不是本页行数
+        page: {type: integer, minimum: 1}
+        pageSize: {type: integer, minimum: 1, maximum: 200}
+
+    WorkspaceDeleted:
+      type: object
+      required: [id, status]
+      properties:
+        id: {type: string, format: uuid}
+        status: {const: deleted}
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code: {type: string}
+        message: {type: string}
+        currentVersion:
+          type: [integer, "null"]
+          description: 仅 409 VERSION_CONFLICT 回带（§9.2）

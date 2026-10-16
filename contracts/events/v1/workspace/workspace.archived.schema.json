@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paper-helper.local/contracts/events/v1/workspace/workspace.archived.schema.json",
+  "title": "Workspace archived event v1",
+  "allOf": [
+    {
+      "$ref": "https://paper-helper.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "properties": {
+        "message_type": {"const": "workspace.archived"},
+        "message_kind": {"const": "event"},
+        "schema_version": {"const": 1},
+        "workspace_id": {"type": "string", "format": "uuid"},
+        "aggregate_type": {"const": "workspace"},
+        "aggregate_id": {"type": "string", "format": "uuid"},
+        "aggregate_version": {"type": "integer", "minimum": 1},
+        "payload": {
+          "type": "object",
+          "required": ["archived_at", "reason"],
+          "properties": {
+            "archived_at": {"type": "string", "format": "date-time"},
+            "reason": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+"""Research Core identity adapters."""

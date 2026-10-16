@@ -9,6 +9,7 @@ dependencies = []
 dev = [
     "alembic>=1.16,<2",
     "jsonschema>=4.26,<5",
+    "pyyaml>=6,<7",
     "pytest>=8.4,<10",
     "pytest-asyncio>=1.2,<2",
     "ruff>=0.12,<1",
@@ -35,3 +36,6 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+# 注释与文档字符串用中文（团队约定）：全角标点在中文里是正常标点，不是"歧义字符"。
+# RUF001 保留不忽略——它管的是**字符串字面量**，那里出现同形字符通常是真的写错了。
+ignore = ["RUF002", "RUF003"]

@@ -1,0 +1,1 @@
+"""Workspace HTTP inbound adapter."""

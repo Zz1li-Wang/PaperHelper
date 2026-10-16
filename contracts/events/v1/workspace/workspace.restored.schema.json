@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paper-helper.local/contracts/events/v1/workspace/workspace.restored.schema.json",
+  "title": "Workspace restored event v1",
+  "allOf": [
+    {
+      "$ref": "https://paper-helper.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "properties": {
+        "message_type": {"const": "workspace.restored"},
+        "message_kind": {"const": "event"},
+        "schema_version": {"const": 1},
+        "workspace_id": {"type": "string", "format": "uuid"},
+        "aggregate_type": {"const": "workspace"},
+        "aggregate_id": {"type": "string", "format": "uuid"},
+        "aggregate_version": {"type": "integer", "minimum": 1},
+        "payload": {
+          "description": "No event-specific fields: occurred_at is the moment itself (§7.3).",
+          "type": "object",
+          "maxProperties": 0,
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

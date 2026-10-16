@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paper-helper.local/contracts/events/v1/workspace/workspace.ownership_transferred.schema.json",
+  "title": "Workspace ownership transferred event v1",
+  "allOf": [
+    {
+      "$ref": "https://paper-helper.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "properties": {
+        "message_type": {"const": "workspace.ownership_transferred"},
+        "message_kind": {"const": "event"},
+        "schema_version": {"const": 1},
+        "workspace_id": {"type": "string", "format": "uuid"},
+        "aggregate_type": {"const": "workspace"},
+        "aggregate_id": {"type": "string", "format": "uuid"},
+        "aggregate_version": {"type": "integer", "minimum": 1},
+        "payload": {
+          "type": "object",
+          "required": ["from_owner_id", "to_owner_id"],
+          "properties": {
+            "from_owner_id": {"type": "string"},
+            "to_owner_id": {"type": "string"}
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}
